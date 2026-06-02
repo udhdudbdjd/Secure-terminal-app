@@ -1,4 +1,4 @@
- name: Build Android APK with Buildozer
+name: Build Android APK with Buildozer
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-python-version: '3.10'
+          python-version: '3.10'
 
       - name: Install Buildozer Dependencies
         run: |
@@ -27,14 +27,11 @@ jobs:
 
       - name: Build APK with Buildozer
         run: |
-          # If a buildozer.spec doesn't exist, create a default one
           if [ ! -f buildozer.spec ]; then
-            echo "Creating a baseline buildozer.spec file..."
+            echo "Creating default buildozer.spec file..."
             ~/.local/bin/buildozer init
-            # Automatically update requirements to include kivy
             sed -i 's/requirements = python3/requirements = python3,kivy/g' buildozer.spec
           fi
-          # Run buildozer in android debug mode
           ~/.local/bin/buildozer -v android debug
 
       - name: Upload Finished APK Artifact
