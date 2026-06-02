@@ -1,9 +1,6 @@
 name: Build Android APK with Buildozer
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
@@ -19,34 +16,21 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install Buildozer Dependencies
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev tk-dev libgdbm-compat-dev liblzma-dev lzma
-          python -m pip install --upgrade pip
-          pip install virtualenv
+          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
 
-      - name: Build APK with Buildozer
+      - name: Install Buildozer + Cython
         run: |
-          # Create and activate a clean virtual environment
-          virtualenv venv
-          source venv/bin/activate
-          
-          # Install build dependencies inside the virtual env
-          pip install --upgrade buildozer cython kivy
-          
-          # Initialize buildozer if spec file doesn't exist
-          if [ ! -f buildozer.spec ]; then
-            echo "Creating default buildozer.spec file..."
-            buildozer init
-            sed -i 's/requirements = python3/requirements = python3,kivy/g' buildozer.spec
-          fi
-          
-          # Execute the android build
-          buildozer -v android debug
+          python -m pip install --upgrade pip
+          pip install buildozer cython
 
-      - name: Find and Upload APK
+      - name: Build APK
+        run: buildozer -v android debug
+
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: SecureTerminal-Android-APK
-          path: ./**/*.apk
+          path: bin/*.apk
