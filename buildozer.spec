@@ -8,6 +8,7 @@ version = 1.0
 requirements = python3,kivy
 orientation = portrait
 android.api = 31
+android.sdk_path = .buildozer/android/platform/android-sdk
 android.minapi = 21
 android.arch = arm64-v8a
 android.permissions = INTERNET,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
