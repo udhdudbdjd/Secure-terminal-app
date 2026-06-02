@@ -1,37 +1,44 @@
-name: Build Android APK with Buildozer
+ name: Build Android APK with Buildozer
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch: # Allows you to trigger the build manually
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Get Buildozer Cache
-      uses: actions/cache@v4
-      with:
-        path: .buildozer
-        key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
-        restore-keys: |
-          ${{ runner.os }}-buildozer-
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-python-version: '3.10'
 
-    - name: Build APK with Buildozer Action
-      uses: ArtemGovorov/buildozer-action@v1
-      id: buildozer
-      with:
-        workdir: .
-        buildozer_version: stable
+      - name: Install Buildozer Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev tk-dev libgdbm-compat-dev liblzma-dev lzma
+          pip install --user --upgrade buildozer cython virtualenv
 
-    - name: Upload Finished APK Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: SecureTerminal-Android-APK
-        path: ${{ steps.buildozer.outputs.filename }}
+      - name: Build APK with Buildozer
+        run: |
+          # If a buildozer.spec doesn't exist, create a default one
+          if [ ! -f buildozer.spec ]; then
+            echo "Creating a baseline buildozer.spec file..."
+            ~/.local/bin/buildozer init
+            # Automatically update requirements to include kivy
+            sed -i 's/requirements = python3/requirements = python3,kivy/g' buildozer.spec
+          fi
+          # Run buildozer in android debug mode
+          ~/.local/bin/buildozer -v android debug
+
+      - name: Upload Finished APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SecureTerminal-Android-APK
+          path: .buildozer/android/platform/build/dists/*/bin/*.apk
